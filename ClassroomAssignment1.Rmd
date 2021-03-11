@@ -1,0 +1,109 @@
+***
+# In-class Exercise: Data Cleaning
+   
+***
+
+Tip:
+
+* Want a cheatsheet for R Markdown?
+  * https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
+* A useful reference for writing reports using R Markdown from Professor Shalizi:
+  * http://www.stat.cmu.edu/~cshalizi/rmarkdown/
+
+***
+
+### Exploring customer data
+First, explore the dataset to get a sense of your customer base. Clearly, there are several issues with the dataset including missing data. Identify the problematic issues and clean the dataset.
+
+Q. Load data file "Assignment1data.csv".
+```{r}
+people <- read_csv("Assignment1data.csv")
+```
+
+Note that different ways of importing a dataset are likely to impact the "read" of the dataset into _R_. For example, if you had used Excel to read the csv file, there is a chance that Excel may have converted NA (missing data) to a  string "NA", which is then read into _R_ as a character string. So you need to pay careful attention to how data is read into _R_.
+
+Q. Get the summary of the data using summary() command.
+```{r}
+summary(people)
+```
+
+
+Do you see the folliwng issues in the summary:
+
+* we can see lots of missing data.
+* Only a minority don't have health insurance coverage (tight market!)
+* Age variable has issues (0 min and 146 max?)
+* Negative income?
+
+Simply dropping (or deleting) the datapoint can lead to a lot of data point being dropped, let's replace these missing values by a new category "unknown".
+
+
+Q. Using ifelse(), replace NAs with "unknown" in the all categorical variables (is.employed and recent.move).
+```{r}
+people$is.employed <- ifelse(is.na(people$is.employed), "unknown", people$is.employed)
+people$recent.move <- ifelse(is.na(people$recent.move), "unknown", people$recent.move)
+```
+
+Remember that using "unknown" for NA will not make sense for numerical variable (e.g., income, age etc.), because the variable will no longer be numerical and we will not be able to take average etc. So we simply delete such rows with missing values in numerical variables.  
+
+Earlier we saw that some values in "income" variable have negative values. Also "age" variable have values like 146 and 0. To remove datapoints with such invalid values, we will first replace these invalid value by NAs and then drop all datapoints with NAs.
+
+Q. Replace negative values of "income" with NAs. 
+```{r}
+people$income <- ifelse(people$income < 0, NA, people$income)
+```
+
+Q. Replace "age<=0" or "age>100" with NAs.
+```{r}
+people$age <- ifelse((people$age < 0 | people$age > 100), NA, people$age)
+```
+
+Q. Use summary() to check if income and age variable appropriately have NAs now instead of invalid values.
+```{r}
+summary(people)
+```
+
+Q. Omit datapoints with NAs.
+```{r}
+people <-na.omit(people)
+```
+
+
+Let's plot some quick exploratory graphs
+
+Q. (i) Plot a bar-chart of variabld "is.employed" and (ii) fill the bars with "health.ins". 
+```{r}
+ggplot(data = people) + 
+  geom_bar(mapping = aes(x = is.employed, fill=health.ins))
+```
+
+Q. Repeat the above with fills representing proportions (use option position="fill")
+```{r}
+ggplot(data = people, mapping = aes(x = is.employed, fill=health.ins)) + 
+  geom_bar(position="fill")
+```
+
+Notice that the bar chart representing absolute values can be slightly misleading sometimes: Proportion of uninsured is higher among the unemployed, although the absolute number of uninsured in higher among employed. This is because the absolute number of employed people are much higher.
+
+
+Q. Plot the bar charts keeping fill=health.ins and the following variables as x variables: recent.move, marital.stat.
+```{r}
+ggplot(data = people, mapping = aes(x = recent.move, fill=health.ins)) + 
+  geom_bar(position="fill")
+ggplot(data = people, mapping = aes(x = marital.stat, fill=health.ins)) + 
+  geom_bar(position="fill")
+```
+Do you notice the following patterns:
+1. There appear to be more uninsured in the population that recently moved
+2. Never married crowd has more uninsured, followed by the divorcees
+
+
+
+Q. Plot two side-by-side box plots of incomes, one for insured (health.ins=True) and other uninsured.
+```{r}
+ggplot(data = people, mapping = aes(x = health.ins, y = income)) + 
+  geom_boxplot()
+```
+Do you observe the following: The average income is higher for insured customers.
+
+***

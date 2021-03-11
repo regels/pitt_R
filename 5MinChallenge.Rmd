@@ -1,0 +1,138 @@
+---
+title: "5MinuteChallenge"
+author: "Shane Regel"
+date: "3/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load Statcast data
+https://baseballsavant.mlb.com/leaderboard/custom?year=2019,2018,2017,2016,2015&type=batter&filter=&sort=4&sortDir=desc&min=100&selections=player_age,b_ab,b_total_pa,b_total_hits,b_single,b_double,b_triple,b_home_run,b_strikeout,b_walk,b_k_percent,b_bb_percent,batting_avg,slg_percent,on_base_percent,on_base_plus_slg,xba,xslg,woba,xwoba,xobp,xiso,exit_velocity_avg,launch_angle_avg,sweet_spot_percent,barrel_batted_rate,&chart=false&x=xba&y=xba&r=no&chartType=beeswarme
+
+```{r}
+library(tidyverse)
+bat <- read_csv("stats.csv")
+summary(bat)
+```
+
+Import MLB salary data from 2015-2019
+https://www.usatoday.com/sports/mlb/salaries/2015/player/all/
+
+```{r}
+salaries <- read_csv("MLBsalaries.csv")
+summary(salaries)
+```
+
+Split name column into first and last
+
+```{r}
+names <- data.frame(do.call('rbind', strsplit(as.character(salaries$NAME),' ',fixed=TRUE)))
+names <- names[-c(3, 4)]
+names(names) <- c("First", "Last")
+salaries <- merge(salaries, names, by.x = 0, by.y = 0)
+```
+
+Drop unneccessary columns and pitchers from salary data
+
+```{r}
+salaries <- salaries[-c(1, 2, 3, 7, 8, 9)]
+salaries <- salaries[!(salaries$POS=="SP" | salaries$POS=="RP"),]
+```
+
+Merge salary data with statcast data
+
+```{r}
+bat <- merge(bat, salaries, by.x=c("first_name", "last_name", "year"), by.y=c("First", "Last", "YEAR"))
+bat <- bat[-c(32)]
+```
+
+Add team win totals to data set
+https://www.baseball-reference.com/leagues/MLB/2019-standings.shtml
+
+```{r}
+wins <- read_csv("wins.csv")
+bat <- merge(bat, wins, by.x=c("TEAM", "year"), by.y=c("Team", "Year"))
+```
+
+Plot homeruns over time
+
+```{r}
+ggplot(bat, aes(x = year, y = b_home_run, group = year)) +            
+  geom_boxplot()
+```
+
+Plot distributions for players for age, exit velocity, launch angle, sweet spot percent, and barrel rate
+
+```{r}
+ggplot(bat, aes(x=player_age)) + geom_histogram(color="darkblue", fill="lightblue")
+ggplot(bat, aes(x=exit_velocity_avg)) + geom_histogram(color="darkblue", fill="lightblue")
+ggplot(bat, aes(x=launch_angle_avg)) + geom_histogram(color="darkblue", fill="lightblue")
+ggplot(bat, aes(x=sweet_spot_percent)) + geom_histogram(color="darkblue", fill="lightblue")
+ggplot(bat, aes(x=barrel_batted_rate)) + geom_histogram(color="darkblue", fill="lightblue")
+```
+
+Plot exit velocity, launch angle, sweet spot percent, and barrel rate against home runs
+
+```{r}
+ggplot(bat, aes(x = exit_velocity_avg, y = b_home_run)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = launch_angle_avg, y = b_home_run)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = sweet_spot_percent, y = b_home_run)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = barrel_batted_rate, y = b_home_run)) +
+    geom_point(aes(color = factor(player_age)))
+```
+
+
+Plot exit velocity, launch angle, sweet spot percent, and barrel rate over time since statcasts release
+
+```{r}
+ggplot(bat, aes(x = year, y = exit_velocity_avg, group = year)) +            
+  geom_boxplot()
+ggplot(bat, aes(x = year, y = launch_angle_avg, group = year)) +            
+  geom_boxplot()
+ggplot(bat, aes(x = year, y = sweet_spot_percent, group = year)) +            
+  geom_boxplot()
+ggplot(bat, aes(x = year, y = barrel_batted_rate, group = year)) +            
+  geom_boxplot()
+```
+
+
+```{r}
+ggplot(salaries, aes(x=SALARY)) + geom_histogram(color="darkblue", fill="lightblue")
+```
+
+Salary vs Age
+
+```{r}
+ggplot(bat, aes(x = player_age, y = SALARY)) +
+    geom_point()
+```
+
+
+Plot home runs vs salaries and home runs vs wins
+
+```{r}
+ggplot(bat, aes(x = SALARY, y = b_home_run)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = Wins, y = b_home_run)) +
+    geom_point(aes(color = factor(player_age)))
+```
+
+Plot launch angle and exit velocity vs salaries and wins
+
+```{r}
+ggplot(bat, aes(x = SALARY, y = exit_velocity_avg)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = Wins, y = exit_velocity_avg)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = SALARY, y = launch_angle_avg)) +
+    geom_point(aes(color = factor(player_age)))
+ggplot(bat, aes(x = Wins, y = launch_angle_avg)) +
+    geom_point(aes(color = factor(player_age)))
+```
+

@@ -1,0 +1,111 @@
+---
+title: "Model_Evaluation_In_class_exercies"
+author: "Manmohan Aseri"
+date: "9/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Load file UniversalBank.csv
+```{r}
+library(tidyverse)
+unibank <- read_csv("UniversalBank.csv")
+```
+
+
+Q.1 Drop ID and zip code columns.
+```{r}
+unibank <- unibank[ , -c(1, 5)] 
+```
+
+Q.2. Convert education level 1,2,3 to "Undergrad", "Graduate", "Advanced" respectively. 
+Hint: Use factor() function and levels = c(1,2,3), labels = c("Undergrad", "Graduate", "Advanced").
+```{r}
+unibank$Education <- factor(unibank$Education, labels = c("Undergrad", "Graduate", "Advanced"))
+```
+
+Q.3. partition data in training and test data: 60/40 split (60% training and 40% test)
+```{r}
+train=sample(1:nrow(unibank), 3000) #3000 = 60% of 5000
+test=unibank[-train,]
+```
+
+Q.4. Run logistic regression to predict "Personal.Loan". 
+Hint: Use glm() with family = "binomial" to fit a logistic regression.
+```{r}
+logit.reg <- glm(`Personal Loan` ~ ., data = unibank[train,], family = "binomial") 
+options(scipen=999) # Disable scientific notation
+summary(logit.reg)
+```
+
+Q.5. Predict using logistic regression. 
+Hint: Use predict() function (with type = "response" to get the classification probabilities).
+```{r}
+logit.reg.pred <- predict(logit.reg, test[, -8], type = "response")
+```
+
+Q.6. Obtain gain value using predicted values in previous question.
+Hint: Use gains() function of "gains" library. Order of arguments: (actual_class,prediction_prob)
+```{r}
+library(gains)
+gain <- gains(test$`Personal Loan`, logit.reg.pred)
+gain
+#which(gain_values$cume.pct.of.total == 1)[1]
+```
+
+Q.6a. How many deciles should the bank target, if the bank wants to capture all the customers who can potentially apply for a loan?
+```{r}
+which(gain$cume.pct.of.total == 1)[1]
+```
+
+
+Q.7. What fraction of people have personal loan
+```{r}
+mean(test$`Personal Loan`)
+```
+
+Q.8. Plot lift chart (Cumulative Percentage of Total Response).
+Hint: Use plot() function 
+```{r}
+plot(gain$cume.obs, gain$cume.pct.of.total, type = "l")
+```
+
+Q.9. Plot decile-wise chart.
+Hint: Height of each decile is the folowing ratio: mean.resp/overall mean.
+```{r}
+heights <- gain$mean.resp/mean(test$`Personal Loan`)
+midpoints <- barplot(heights, names.arg = gain$depth, ylim = c(0,9), 
+                     xlab = "Percentile", ylab = "Mean Response", main = "Decile-wise lift chart")
+```
+
+Q.10. Load data: "ownerExample.csv". The data contains two columns: (i) Class (owner/non-owner), (ii) Probability of owner.
+i. Use the owner data and a cutoff of 0.75 to predict owner (Prob>0.75 is owner). Hint: Use ifelse() function.
+ii. Obtain confusiontMatrix. Hint: Use confusionMatrix() funciton of "caret" package. Argument order: (predicted, actual)
+```{r}
+#install.packages("caret")
+library(caret)
+owner <- read_csv("ownerExample.csv")
+confusionMatrix(as.factor(ifelse(owner$Probability>0.75, 'owner', 'nonowner')), as.factor(owner$Class))
+```
+
+iii. Repeat the above exercise with cutoffs 0.25 and 0.5
+```{r}
+confusionMatrix(as.factor(ifelse(owner$Probability>0.25, 'owner', 'nonowner')), as.factor(owner$Class))
+confusionMatrix(as.factor(ifelse(owner$Probability>0.5, 'owner', 'nonowner')), as.factor(owner$Class))
+```
+
+Q.11. Obtain Roc curve. Hint: Use roc() function of "e1071" library, also load library "pROC". Order of arguments: (actual_class, probability). 
+Hint: Use plot.roc() to plot (load packages "e1071" and "pROC").
+```{r}
+#install.packages("e1071")
+#install.packages("pROC")
+library(e1071)
+library(pROC)
+
+r <- roc(owner$Class, owner$Probability)
+plot.roc(r)
+```

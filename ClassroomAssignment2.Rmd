@@ -1,0 +1,82 @@
+---
+title: "Classroom Exercise: Plotting"
+author: "Manmohan Aseri"
+date: "2/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+library(tidyverse)
+```
+
+
+
+Step 1: Load Titanic data titanic.csv
+```{r}
+titanic <- read_csv("titanic.csv")
+```
+
+Step 2: Convert "Survived = 0" into "Not-Survived" and "Survived = 1" as "Survived". Then, convert this variable into a factor variable.
+```{r}
+titanic$Survived <- ifelse(titanic$Survived == 0, "Not-Survived", "Survived")
+titanic$Survived <- as.factor(titanic$Survived)
+```
+
+Step 3: Covert "Sex" and "Pclass" variable into factor variables.
+```{r}
+titanic$Sex <- as.factor(titanic$Sex)
+titanic$Pclass <- as.factor(titanic$Pclass)
+```
+
+
+We'll start our visual analysis of the data focusing on questions related to survival rates. 
+
+Q1 - What was the survival rate? <br>
+Hint: Plot a bar chart of Survived variable.
+```{r}
+ggplot(titanic) + 
+  geom_bar(mapping = aes(x = Survived))
+```
+
+
+
+Q2 - What is percentage survival. <br>
+Hint: Use table() function on Survived variable
+```{r}
+table1 <-as.table(table(titanic$Survived))
+prop.table(table1)*100
+```
+
+
+Q3 - What was the survival rate by gender? <br>
+Hint: Plot and barchart of Sex variable and fill it with survived
+
+```{r}
+ggplot(titanic) + 
+  geom_bar(mapping = aes(x = Sex, fill = Survived))
+```
+
+
+Q4 - What was the survival rate by class of ticket? <br>
+Hint: Plot bar-chart like previous question. 
+```{r}
+ggplot(titanic) + 
+  geom_bar(mapping = aes(x = Pclass, fill = Survived))
+```
+
+Q5 - What was the survival rate by class of ticket and gender? <br>
+Hint: Use facet_wrap
+```{r}
+ggplot(titanic) + 
+  geom_bar(mapping = aes(x = Pclass, fill = Survived)) + 
+  facet_wrap(~ Sex)
+```
+
+Q6 - What was the survival rate by class of ticket and age? <br>
+Hint: Use histogram instead of barchart. Remember histograms are used to show distributions of variables while bar charts are used to compare variables. Thus, there is no order of vaiables in bar charts.
+```{r}
+ggplot(titanic, aes(x=Age, fill=Survived, color=Survived)) +
+  geom_histogram(binwidth=2) + 
+  facet_wrap(~ Pclass)
+```

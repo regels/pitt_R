@@ -1,0 +1,162 @@
+---
+title: "ShaneRegelAssignment2"
+author: "Shane Regel"
+date: "2/21/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+#1  Describe the null hypotheses to which the p-values given in Table 3.4 correspond. Explain what conclusions you can draw based on these p-values. Your explanation should be phrased in terms of sales, TV, radio, and newspaper, rather than in terms of the coefficients of the linear model.
+
+
+The null hypotheis tests if there is a relationship between x and y by setting the coefficients to zero. If we see a small p-value, then we can infer that there is an association between the predictor and the response. Thus we are "rejecting the null hypotesis" asserting thier is a relationship. Both tv and radio have coefficients much larger than their std errors, as well as small p-values. This indicates we can reject the null hypothesis. Newspapers however has a coefficient lower than its std error and a large p-vaue indicating their is no relationship between newspapers and  sales
+
+
+#3 Suppose we have a data set with five predictors, X1 = GPA, X2 = IQ, X3 = Gender (1 for Female and 0 for Male), X4 = Interaction between GPA and IQ, and X5 = Interaction between GPA and Gender. The response is starting salary after graduation (in thousands of dollars). Suppose we use least squares to fit the model, and get βˆ0 = 50, βˆ1 =
+20, βˆ2 = 0.07, βˆ3 = 35, βˆ4 = 0.01, βˆ5 = −10.
+
+
+y = 50 + (20*GPA) + (0.07*IQ) + (35*Gender) + (0.01*GPA/IQ) + (-10*GPA/Gender)
+
+
+a). Which answer is correct, and why?
+
+iii is correct: For GPA above 3.5 males will earn more.
+
+Males: y = 50 + (20*GPA) + (0.07*IQ) + 0 + (0.01*(GPA*IQ)) + 0
+Males: y = 50 + (20*GPA) + (0.07*IQ) + (0.01*(GPA*IQ))
+
+Females: y = 50 + (20*GPA) + (0.07*IQ) + 35 + (0.01*(GPA*IQ)) + (-10*GPA)
+Females: y = 85 + (10*GPA) + (0.07IQ) + (0.01*(GPA*IQ))
+
+So essentially we are left with
+
+Males: y = 50 + (20*GPA) 
+Females: y = 85 + (10*GPA)
+
+
+
+b). Predict the salary of a female with IQ of 110 and a GPA of 4.0.
+
+Salary = 50 + (20*4.0) + (0.07*110) + (35*1) + (0.01*(4.0*110)) + (-10*(4*0))
+Salary = 50 + 80 + 7.7 + 35 + (0.01*440) + (-10*4)
+Salary = 50 + 80 + 7.7 + 35 + 4.4 - 40
+Salary = 137.1 (thousands)
+
+c). True or false: Since the coefficient for the GPA/IQ interaction term is very small, there is very little evidence of an interaction effect. Justify your answer.
+
+False. The coefficients do not necessarily indicate the effect of the interaction of the variable. The coefficients have more to do with the scale of the variables they are assigned to. In this case IQ is on a much larger scale than GPA, (which is 1-4) or gender (which is 0 or 1).
+
+
+#10 This question should be answered using the Carseats data set.
+
+a). Fit a multiple regression model to predict Sales using Price, Urban, and US
+```{r}
+library(tidyverse)
+carseats <- read_csv("Carseats.csv")
+fit.lm <- lm(Sales ~ Price + Urban + US, data=carseats)
+summary(fit.lm)
+```
+
+b). Provide an interpretation of each coefficient in the model. Be careful—some of the variables in the model are qualitative!
+
+The coefficient for price is -0.054459 which indicates a drop in sales of about 54 units for every corresponding increase in dollar price.
+Since urban is not quantitative and a binary the regression gives us a coefficient of -0.021916 for when Urban = Yes. Thus it indicates that sales are about 22 units lower for urban areas than non urban areas.
+Similarly for US = Yes we see sales are around 1,200 higher in Us locations.
+
+c). Write out the model in equation form, being careful to handle the qualitative variables properly
+
+Sales = 13.043469 + (-0.054459*Price) + (-0.021916*(Urban=Yes)) + (1.200573*(US=Yes))
+
+d). For which of the predictors can you reject the null hypothesis H0 : βj = 0?
+
+For Price and US we can reject the null hypothesis as they both have extremely low p-values.
+
+e). On the basis of your response to the previous question, fit a smaller model that only uses the predictors for which there is evidence of association with the outcome.
+```{r}
+fit.lm1 <- lm(Sales ~ Price + US, data=carseats)
+summary(fit.lm1)
+```
+
+f). How well do the models in (a) and (e) fit the data?
+
+The first model with 3 variables had a RSE = 2.472 and a R-squared = 0.2393. While the reduced model with 2 varibales had RSE= 2.469 and R-squared = 0.2393. Thus the second model had a slightly lower RSE while also having one less variable, which is better from both a simplicity and overfitting standpoint.
+
+g). Using the model from (e), obtain 95 % confidence intervals for the coefficient(s).
+```{r}
+confint(fit.lm1, level=0.95)
+```
+
+h). Is there evidence of outliers or high leverage observations in the model from (e)?
+```{r}
+par(mfrow=c(2,2))
+plot(fit.lm1)  
+```
+
+There is not evidence of strong outliers.
+
+
+#15 This problem involves the Boston data set, which we saw in the lab for this chapter. We will now try to predict per capita crime rate using the other variables in this data set. In other words, per capita crime rate is the response, and the other variables are the predictors.
+
+a). For each predictor, fit a simple linear regression model to predict the response. Describe your results. In which of the models is there a statistically significant association between the predictor and the response? Create some plots to back up your assertions.
+
+```{r}
+boston <- read.csv("BostonHousing.csv")
+for(i in 2:14){
+  reg = lm(CRIM ~ boston[,i], data=boston)
+  print(summary(reg))
+  }
+```
+
+The third variable which is CHAS with a p-value of 0.209 is the only one with a p-value that is not tiny, so we can conclude it is the only non-significant predictor.
+
+
+b). Fit a multiple regression model to predict the response using all of the predictors. Describe your results. For which predictors can we reject the null hypothesis H0 : βj = 0?
+```{r}
+bos.lm <- lm(boston)
+summary(bos.lm)
+```
+
+We can reject the null hypothesis for RAD and MEDV as th eboth have extremely small p-values. We could maybe also reject the null hypothesis for NOX, DIS, and CAT.MEDV as well. Though their p-values are higher than RAD and MEDV.
+
+
+c). How do your results from (a) compare to your results from (b)? Create a plot displaying the univariate regression coefficients from (a) on the x-axis, and the multiple regression coefficients from (b) on the y-axis. That is, each predictor is displayed as a single point in the plot. Its coefficient in a simple linear regression model is shown on the x-axis, and its coefficient estimate in the multiple linear regression model is shown on the y-axis.
+```{r}
+uni.coef <- c(coefficients(lm(CRIM~ZN,data=boston))[2],
+              coefficients(lm(CRIM~INDUS,data=boston))[2],
+              coefficients(lm(CRIM~CHAS,data=boston))[2],
+              coefficients(lm(CRIM~NOX,data=boston))[2],
+              coefficients(lm(CRIM~RM,data=boston))[2],
+              coefficients(lm(CRIM~AGE,data=boston))[2],
+              coefficients(lm(CRIM~DIS,data=boston))[2],
+              coefficients(lm(CRIM~RAD,data=boston))[2],
+              coefficients(lm(CRIM~TAX,data=boston))[2],
+              coefficients(lm(CRIM~PTRATIO,data=boston))[2],
+              coefficients(lm(CRIM~LSTAT,data=boston))[2],
+              coefficients(lm(CRIM~MEDV,data=boston))[2],
+              coefficients(lm(CRIM~CAT..MEDV,data=boston))[2])
+multi.coef <- coefficients(lm(CRIM~.,data=boston)[-1])
+plot(uni.coef, multi.coef)
+```
+
+
+
+d). Is there evidence of non-linear association between any of the predictors and the response? To answer this question, for each predictor X, fit a model of the form
+Y = β0 + β1X + β2X2 + β3X3 + e
+```{r}
+#drop chas
+summary(lm(CRIM~poly(ZN,3), data=boston))      
+summary(lm(CRIM~poly(INDUS,3), data=boston))   
+summary(lm(CRIM~poly(NOX,3), data=boston))     
+summary(lm(CRIM~poly(RM,3), data=boston))      
+summary(lm(CRIM~poly(AGE,3), data=boston))     
+summary(lm(CRIM~poly(DIS,3), data=boston))     
+summary(lm(CRIM~poly(RAD,3), data=boston))     
+summary(lm(CRIM~poly(TAX,3), data=boston))     
+summary(lm(CRIM~poly(PTRATIO,3), data=boston)) 
+summary(lm(CRIM~poly(LSTAT,3), data=boston))   
+summary(lm(CRIM~poly(MEDV,3), data=boston))    
+```
+
+Yes there is evidence of non-linear association for most of the predictors.

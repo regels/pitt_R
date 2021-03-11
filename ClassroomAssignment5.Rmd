@@ -1,0 +1,95 @@
+---
+title: "Classroom Assignment 5"
+author: "Shane Regel"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+In this exercise you will build ensembles, using some in-built commands.
+
+
+Load file UniversalBank.csv
+```{r}
+unibank <- read.csv("UniversalBank.csv")
+```
+
+Drop ID and zip code columns (1 and 5).
+```{r}
+unibank <- unibank[,-c(1,5)]
+```
+
+Transform Personal.Loan into categorical variable (factor variable)
+```{r}
+unibank$Personal.Loan <- as.factor(unibank$Personal.Loan)
+```
+
+Partition the data 60/40. Set seed at 1
+```{r}
+set.seed(1)
+train_rows <- sample(row.names(unibank), length(unibank$Age)*0.6)
+test_rows <- setdiff(row.names(unibank), train_rows)
+train_data <- unibank[train_rows,]
+test_data <- unibank[test_rows,]
+```
+
+Q.1. Train a decision tree using train() function of "caret" package. Use method = "rpart".
+Predict variable "Personal.Loan" using rest of the variables.
+```{r}
+library(caret)
+dtree_model <- train(Personal.Loan~., data = train_data, method = 'rpart')
+```
+
+
+Q.2. Predict using predict() function, use type = "raw" to predict the class (not the class probability).
+```{r}
+pred <- predict(dtree_model, test_data)
+```
+
+
+Q.3. Create confusion matrix using confusionMatrix(prediction, true_value). Use positive = "1" to assign "1" as the positive class.
+```{r}
+confusionMatrix(pred, as.factor(test_data$Personal.Loan))
+```
+
+
+Q.4. Run bagging algorithm using method = "treebag" in the train() function. Predict Personal.Loan using rest of the variables
+```{r}
+bag_model <- train(Personal.Loan~., data = train_data, method = 'treebag')
+```
+
+
+Q.5. Predict test data using predict() function. Use type = "raw"
+```{r}
+pred_bag <- predict(bag_model, test_data, type="raw")
+```
+
+
+Q.6. Obtain confusion matrix using confusionMatrix(prediction$class, true_value). Use positive = "1" to assign "1" as the positive class.
+```{r}
+confusionMatrix(as.factor(pred_bag), as.factor(test_data$Personal.Loan), positive="1")
+```
+
+
+Q.7. Run boosting algorithm using method = "adaboost" in train() function. 
+```{r}
+#install.packages("fastAdaboost")
+library(fastAdaboost)
+boost_model <- train(Personal.Loan~., data=train_data, method="adaboost")
+```
+
+
+Q.8. Predict test data using predict().
+```{r}
+pred_boost <- predict(boost_model, test_data)
+```
+
+Q.9. Create confusion Matrix.
+```{r}
+confusionMatrix(as.factor(pred_boost), as.factor(test_data$Personal.Loan), positive="1")
+```
+
+

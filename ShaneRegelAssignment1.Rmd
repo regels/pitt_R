@@ -1,0 +1,113 @@
+---
+title: "ShaneRegelAssignment1"
+author: "Shane Regel"
+date: "2/8/2021"
+output: html_document
+---
+
+## Q1
+
+Load data file "Assignment1data.csv".
+```{r}
+library(tidyverse)
+people <- read_csv("Assignment1data.csv")
+```
+
+Replace NAs with "unknown" in the all categorical variables (is.employed and recent.move)
+
+Replace negative values of "income" with NAs
+
+Replace "age<=0" or "age>100" with NAs
+```{r}
+people$is.employed <- ifelse(is.na(people$is.employed), "unknown", people$is.employed)
+people$recent.move <- ifelse(is.na(people$recent.move), "unknown", people$recent.move)
+
+people$income <- ifelse(people$income < 0, NA, people$income)
+
+people$age <- ifelse((people$age < 0 | people$age > 100), NA, people$age)
+```
+
+Use summary() to check if income and age variable appropriately have NAs now instead of invalid values
+```{r}
+summary(people)
+```
+
+Omit datapoints with NAs.
+```{r}
+people <-na.omit(people)
+```
+
+i. Horizontal bar graph showing the distribution of the number of customers in each state in descending order of the count.
+```{r}
+ggplot(people, aes(x = reorder(state.of.res, state.of.res, function(x) length(x)))) + 
+  geom_bar() + 
+  coord_flip() +
+  labs(x="State", y="Count")
+```
+
+ii. Scatter plot showing the relationship between age of customers and their income, along with a suitable regression line that depicts the trend
+```{r}
+ggplot(people, aes(x = age, y = income)) + 
+  geom_point() + 
+  geom_smooth(mapping = aes(x = age, y = income))
+```
+
+iii. Illustrate the different trends for customers with different marital statuses
+```{r}
+ggplot(people, aes(x = age, y = income, color = marital.stat)) + 
+  geom_point() + 
+  geom_smooth(mapping = aes(x = age, y = income))
+```
+
+iv. Illustrate the different trends for customers with different housing type
+```{r}
+ggplot(people, aes(x = age, y = income, color = housing.type)) + 
+  geom_point() + 
+  geom_smooth(mapping = aes(x = age, y = income))
+```
+
+v. Illustrate the different trends for customers with different health insurance coverages
+```{r}
+ggplot(people, aes(x = age, y = income, color = health.ins)) + 
+  geom_point() + 
+  geom_smooth(mapping = aes(x = age, y = income))
+```
+
+## Q2
+
+Create a scatter plot of Lot Size vs. Income, color-coded by the outcomevariable owner/nonowner. Make sure to obtain a well-formatted plot (create legible labels and a legend, etc.)
+```{r}
+mowers <- read_csv("RidingMowers.csv")
+```
+```{r}
+ggplot(mowers, aes(x = Lot_Size, y = Income, color = Ownership)) + 
+  geom_point() +
+  labs(title="Mower Ownership by Income and Lot Size", x="Lot Size", y="Income")
+```
+
+## Q3
+
+1. Create a bar chart, showing the average retail price by store. Which store (corresponding variable: Store.Postcode) has the highest average? Which has the lowest? 
+
+By using a boxplot for the acerage retail price by store and then using the reorder function to display the stores in descending order we can see that N17 6QA has the highest average and W4 3PH has the lowest average.
+
+```{r}
+laptopSales <- read_csv("LaptopSalesJanuary2008.csv")
+```
+
+
+```{r}
+ggplot(laptopSales, aes(x = reorder(`Store Postcode`, -`Retail Price`), y = `Retail Price`)) + 
+  geom_bar(stat = "summary", fun.y = "mean") +
+  labs(x="Store Postcode", y="Retail Price")
+```
+
+2. To better compare retail prices across stores, create side-by-side boxplots of retail price by store. Now compare the prices in the two stores from (a). Does there seem to be a difference between their price distributions?
+
+N17 6QA has a lot fewer outliers than W4 3PH does. It seems like it has a much tighter distribution.
+
+```{r}
+ggplot(laptopSales, aes(x = reorder(`Store Postcode`, -`Retail Price`), y = `Retail Price`)) + 
+  geom_boxplot()
+```
+
